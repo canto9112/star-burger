@@ -68,18 +68,6 @@ def product_list_api(request):
         'indent': 4,
     })
 
-# def validate(data):
-#     errors = []
-#
-#     if 'products' not in data:
-#         errors.append('Подуктов нет. products: Обязательное поле.')
-#     check_product = isinstance(data['products'], list)
-#     if check_product is False:
-#         errors.append(f'''products: Ожидался list со значениями, но был получен "{type(data['products'])}".''')
-#     if not data['products']:
-#         errors.append('Продукты — пустой список. products: Этот список не может быть пустым.')
-#
-
 
 class OrderProductsSerializer(ModelSerializer):
     class Meta:
@@ -99,16 +87,16 @@ class OrderSerializer(ModelSerializer):
 def register_order(request):
     data = request.data
 
-    order_serializer = OrderSerializer(data=request.data)
-    order_serializer.is_valid(raise_exception=True)
+    serializer = OrderSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
-    order = Order.objects.create(firstname=data['firstname'],
-                                 lastname=data['lastname'],
-                                 address=data['address'],
-                                 phonenumber=data['phonenumber']
+    order = Order.objects.create(firstname=serializer.validated_data['firstname'],
+                                 lastname=serializer.validated_data['lastname'],
+                                 address=serializer.validated_data['address'],
+                                 phonenumber=serializer.validated_data['phonenumber']
                                  )
 
-    for item in data['products']:
+    for item in serializer.validated_data['products']:
         order.order_items.create(product_id=item['product'], quantity=item['quantity'])
 
     return Response(data, status=status.HTTP_201_CREATED)
