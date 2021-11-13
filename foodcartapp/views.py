@@ -1,20 +1,13 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
-import json
-from pprint import pprint
-from .models import Order
-from .models import OrderMenuItem
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.serializers import ValidationError
-from rest_framework.serializers import Serializer
-from rest_framework.serializers import CharField, ListSerializer
-from rest_framework.serializers import ModelSerializer
-from rest_framework.serializers import ListField
 
-
-from .models import Product
+from foodcartapp.serializers import OrderSerializer
+from .models import Order, Product
+from pprint import pprint
+from rest_framework.parsers import JSONParser
 
 
 def banners_list_api(request):
@@ -69,35 +62,17 @@ def product_list_api(request):
     })
 
 
-class OrderProductsSerializer(ModelSerializer):
-    class Meta:
-        model = OrderMenuItem
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(ModelSerializer):
-    products = OrderProductsSerializer(many=True, allow_empty=False)
-
-    class Meta:
-        model = Order
-        fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
-
-
 @api_view(['POST', ])
 def register_order(request):
-    data = request.data
-
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-
     order = Order.objects.create(firstname=serializer.validated_data['firstname'],
                                  lastname=serializer.validated_data['lastname'],
                                  address=serializer.validated_data['address'],
                                  phonenumber=serializer.validated_data['phonenumber']
                                  )
-
     for item in serializer.validated_data['products']:
         order.order_items.create(product=item['product'], quantity=item['quantity'])
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    return Response(data, status=status.HTTP_201_CREATED)
 
