@@ -8,6 +8,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.serializers import ValidationError
+from rest_framework.serializers import Serializer
+from rest_framework.serializers import CharField, ListSerializer
+from rest_framework.serializers import ModelSerializer
 
 
 from .models import Product
@@ -64,18 +67,38 @@ def product_list_api(request):
         'indent': 4,
     })
 
+# def validate(data):
+#     errors = []
+#
+#     if 'products' not in data:
+#         errors.append('Подуктов нет. products: Обязательное поле.')
+#     check_product = isinstance(data['products'], list)
+#     if check_product is False:
+#         errors.append(f'''products: Ожидался list со значениями, но был получен "{type(data['products'])}".''')
+#     if not data['products']:
+#         errors.append('Продукты — пустой список. products: Этот список не может быть пустым.')
+#
+
+
+class ApplicationSerializer(ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['address', 'firstname', 'lastname', 'phonenumber']
+
+
+class ProductsSerializer(ModelSerializer):
+    class Meta:
+        model = OrderMenuItem
+        fields = ['product', 'quantity']
+
 
 @api_view(['POST', ])
 def register_order(request):
     data = request.data
-
-    if 'products' not in data:
-        raise ValidationError(['Подуктов нет. products: Обязательное поле.'])
-    check_product = isinstance(data['products'], list)
-    if check_product is False:
-        raise ValidationError([f'''products: Ожидался list со значениями, но был получен "{type(data['products'])}".'''])
-    if not data['products']:
-        raise ValidationError(['Продукты — пустой список. products: Этот список не может быть пустым.'])
+    serializer = ApplicationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    products_serializer = ProductsSerializer(data=request.data)
+    products_serializer.is_valid(raise_exception=True)
 
     order = Order.objects.create(firstname=data['firstname'],
                                  lastname=data['lastname'],
