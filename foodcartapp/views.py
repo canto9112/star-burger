@@ -11,6 +11,7 @@ from rest_framework.serializers import ValidationError
 from rest_framework.serializers import Serializer
 from rest_framework.serializers import CharField, ListSerializer
 from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ListField
 
 
 from .models import Product
@@ -87,7 +88,7 @@ class OrderProductsSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderProductsSerializer()
+    products = OrderProductsSerializer(many=True, allow_empty=False)
 
     class Meta:
         model = Order
