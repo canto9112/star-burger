@@ -4,6 +4,8 @@ import json
 from pprint import pprint
 from .models import Order
 from .models import OrderMenuItem
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
 from .models import Product
@@ -61,36 +63,22 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
-    try:
-        order = json.loads(request.body.decode())
-        pprint(order)
-        address = order['address']
-        firstname = order['firstname']
-        lastname = order['lastname']
-        phonenumber = order['phonenumber']
-        products = order['products']
-
-        Order.objects.create(address=address,
-                             firstname=firstname,
-                             lastname=lastname,
-                             phonenumber=phonenumber
-                             )
-        order = Order.objects.get(firstname=firstname,
-                                  lastname=lastname,
-                                  address=address,
-                                  phonenumber=phonenumber
-                                  )
-        for product in products:
-            product_id = product['product']
-            quantity = product['quantity']
-
-            prod = Product.objects.get(pk=product_id)
-            OrderMenuItem.objects.create(order=order, product=prod, quantity=quantity)
-
-        return JsonResponse(order)
-    except ValueError:
-        return JsonResponse({
-            'error': 'bla bla bla',
-        })
+    Order.objects.create(address=request.data["address"],
+                         firstname=request.data["firstname"],
+                         lastname=request.data["lastname"],
+                         phonenumber=request.data["phonenumber"]
+                         )
+    order = Order.objects.get(firstname=request.data["address"],
+                              lastname=request.data["firstname"],
+                              address=request.data["lastname"],
+                              phonenumber=request.data["phonenumber"]
+                              )
+    for product in request.data["products"]:
+        product_id = product["product"]
+        quantity = product["quantity"]
+        prod = Product.objects.get(pk=product_id)
+        OrderMenuItem.objects.create(order=order, product=prod, quantity=quantity)
+    return Response(request.data)
 
