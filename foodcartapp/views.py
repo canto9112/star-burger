@@ -6,6 +6,7 @@ from .models import Order
 from .models import OrderMenuItem
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 
 
 from .models import Product
@@ -63,22 +64,19 @@ def product_list_api(request):
     })
 
 
-@api_view(['POST'])
+@api_view(['POST', ])
 def register_order(request):
-    Order.objects.create(address=request.data["address"],
-                         firstname=request.data["firstname"],
-                         lastname=request.data["lastname"],
-                         phonenumber=request.data["phonenumber"]
-                         )
-    order = Order.objects.get(firstname=request.data["address"],
-                              lastname=request.data["firstname"],
-                              address=request.data["lastname"],
-                              phonenumber=request.data["phonenumber"]
-                              )
-    for product in request.data["products"]:
-        product_id = product["product"]
-        quantity = product["quantity"]
-        prod = Product.objects.get(pk=product_id)
-        OrderMenuItem.objects.create(order=order, product=prod, quantity=quantity)
-    return Response(request.data)
+    try:
+        data = request.data
+        order = Order.objects.create(firstname=data['firstname'],
+                                     lastname=data['lastname'],
+                                     address=data['address'],
+                                     phonenumber=data["phonenumber"]
+                                     )
+        for item in data['products']:
+            order.order_items.create(product_id=item['product'], quantity=item['quantity'])
+        return Response(data, status=status.HTTP_201_CREATED)
+    except ValueError:
+        return Response(None, status=status.HTTP_400_BAD_REQUEST)
+
 
