@@ -80,16 +80,18 @@ def product_list_api(request):
 #
 
 
-class OrderSerializer(ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['address', 'firstname', 'lastname', 'phonenumber']
-
-
 class OrderProductsSerializer(ModelSerializer):
     class Meta:
         model = OrderMenuItem
         fields = ['product', 'quantity']
+
+
+class OrderSerializer(ModelSerializer):
+    products = OrderProductsSerializer()
+
+    class Meta:
+        model = Order
+        fields = ['address', 'firstname', 'lastname', 'phonenumber', 'products']
 
 
 @api_view(['POST', ])
@@ -105,8 +107,6 @@ def register_order(request):
                                  phonenumber=data['phonenumber']
                                  )
 
-    products_serializer = OrderProductsSerializer(data=request.data)
-    products_serializer.is_valid(raise_exception=True)
     for item in data['products']:
         order.order_items.create(product_id=item['product'], quantity=item['quantity'])
 
