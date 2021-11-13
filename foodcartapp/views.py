@@ -7,6 +7,7 @@ from .models import OrderMenuItem
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.serializers import ValidationError
 
 
 from .models import Product
@@ -66,17 +67,22 @@ def product_list_api(request):
 
 @api_view(['POST', ])
 def register_order(request):
-    try:
-        data = request.data
-        order = Order.objects.create(firstname=data['firstname'],
-                                     lastname=data['lastname'],
-                                     address=data['address'],
-                                     phonenumber=data["phonenumber"]
-                                     )
-        for item in data['products']:
-            order.order_items.create(product_id=item['product'], quantity=item['quantity'])
-        return Response(data, status=status.HTTP_201_CREATED)
-    except ValueError:
-        return Response(None, status=status.HTTP_400_BAD_REQUEST)
+    data = request.data
 
+    if 'products' not in data:
+        raise ValidationError(['Подуктов нет. products: Обязательное поле.'])
+    check_product = isinstance(data['products'], list)
+    if check_product is False:
+        raise ValidationError([f'''products: Ожидался list со значениями, но был получен "{type(data['products'])}".'''])
+    if not data['products']:
+        raise ValidationError(['Продукты — пустой список. products: Этот список не может быть пустым.'])
+
+    order = Order.objects.create(firstname=data['firstname'],
+                                 lastname=data['lastname'],
+                                 address=data['address'],
+                                 phonenumber=data['phonenumber']
+                                 )
+    for item in data['products']:
+        order.order_items.create(product_id=item['product'], quantity=item['quantity'])
+    return Response(data, status=status.HTTP_201_CREATED)
 
