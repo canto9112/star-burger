@@ -97,7 +97,7 @@ def register_order(request):
                                  )
 
     for item in serializer.validated_data['products']:
-        order.order_items.create(product_id=item['product'], quantity=item['quantity'])
+        order.order_items.create(product=item['product'], quantity=item['quantity'])
 
     return Response(data, status=status.HTTP_201_CREATED)
 
